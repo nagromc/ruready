@@ -1,0 +1,13 @@
+[package]
+name = "ruready"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+config = { version = "0.13.1", default-features = false, features = ["toml"] }
+directories = "4.0"
+
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
