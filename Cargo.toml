@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 config = { version = "0.13.1", default-features = false, features = ["toml"] }
 directories = "4.0"
+inquire = "0.5.2"
 
 [profile.release]
 strip = true

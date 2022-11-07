@@ -1,5 +1,6 @@
 use config::Config;
 use directories::ProjectDirs;
+use inquire::MultiSelect;
 
 struct Configuration {
     carpoolers: Vec<String>,
@@ -13,9 +14,16 @@ struct CarpoolerStatus {
 
 fn main() {
     let config = load_configuration();
-    let selected_carpoolers = config.carpoolers;
-    let report = build_report(selected_carpoolers, config.current_user);
-    print_report(report);
+    let selected_carpoolers = MultiSelect::new("Select the carpoolers of today:", config.carpoolers)
+        .prompt();
+
+    match selected_carpoolers {
+        Ok(_) => {
+            let report = build_report(selected_carpoolers.unwrap(), config.current_user);
+            print_report(report);
+        },
+        Err(_) => panic!("The selected carpoolers could not be retrieved"),
+    }
 }
 
 fn load_configuration() -> Configuration {
