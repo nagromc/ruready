@@ -6,9 +6,16 @@ struct Configuration {
     current_user: String,
 }
 
+struct CarpoolerStatus {
+    carpooler: String,
+    ready: bool,
+}
+
 fn main() {
     let config = load_configuration();
-    print_report(config);
+    let selected_carpoolers = config.carpoolers;
+    let report = build_report(selected_carpoolers, config.current_user);
+    print_report(report);
 }
 
 fn load_configuration() -> Configuration {
@@ -35,15 +42,21 @@ fn load_configuration() -> Configuration {
     } else { panic!("Could not load settings") }
 }
 
-fn print_report(config: Configuration) {
-    let mut carpoolers = config.carpoolers.clone();
-    carpoolers.push(config.current_user.clone());
-    carpoolers.sort();
-
-    carpoolers.iter()
-        .map(|c| {
-            let status = if c.eq(config.current_user.as_str()) { "✔" } else { "❌" };
-            return format!("{} {}", status, c);
+fn build_report(selected_carpoolers: Vec<String>, current_carpooler: String) -> Vec<CarpoolerStatus> {
+    let mut carpoolers = selected_carpoolers.clone();
+    carpoolers.push(current_carpooler.clone());
+    let carpooler_statuses = carpoolers.iter()
+        .map(|c| CarpoolerStatus {
+            carpooler: c.to_string(),
+            ready: c.eq(current_carpooler.as_str()),
         })
-        .for_each(|l| { println!("{}", l) });
+        .collect();
+
+    return carpooler_statuses;
+}
+
+fn print_report(mut report: Vec<CarpoolerStatus>) {
+    report.sort_by(|a, b| a.carpooler.cmp(&b.carpooler));
+    report.iter()
+        .for_each(|cs| println!("{} {}", if cs.ready { "✔" } else { "❌" }, cs.carpooler))
 }
