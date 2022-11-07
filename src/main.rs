@@ -36,7 +36,11 @@ fn load_configuration() -> Configuration {
 }
 
 fn print_report(config: Configuration) {
-    config.carpoolers.iter()
+    let mut carpoolers = config.carpoolers.clone();
+    carpoolers.push(config.current_user.clone());
+    carpoolers.sort();
+
+    carpoolers.iter()
         .map(|c| {
             let status = if c.eq(config.current_user.as_str()) { "✔" } else { "❌" };
             return format!("{} {}", status, c);
