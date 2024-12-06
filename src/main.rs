@@ -7,6 +7,7 @@ struct Configuration {
   current_user: String,
 }
 
+#[derive(Clone)]
 struct CarpoolerStatus {
   carpooler: String,
   ready: bool,
@@ -20,7 +21,8 @@ fn main() {
   match selected_carpoolers {
     Ok(_) => {
       let report = build_report(selected_carpoolers.unwrap(), config.current_user);
-      print_report(report);
+      let formatted_report = format_report(report.clone());
+      print_report(formatted_report);
     }
     Err(_) => panic!("The selected carpoolers could not be retrieved"),
   }
@@ -75,9 +77,20 @@ fn build_report(
   return carpooler_statuses;
 }
 
-fn print_report(mut report: Vec<CarpoolerStatus>) {
-  report.sort_by(|a, b| a.carpooler.cmp(&b.carpooler));
-  report
-    .iter()
-    .for_each(|cs| println!("{} {}", if cs.ready { "✔" } else { "❌" }, cs.carpooler))
+fn format_report(report: Vec<CarpoolerStatus>) -> String {
+  sort_report(report)
+      .iter()
+      .map(|cs| format!("{} {}", if cs.ready { "✔" } else { "❌" }, cs.carpooler))
+      .collect::<Vec<String>>()
+      .join("\n")
+}
+
+fn sort_report(report: Vec<CarpoolerStatus>) -> Vec<CarpoolerStatus> {
+  let mut sorted_report = report.clone();
+  sorted_report.sort_by(|a, b| a.carpooler.cmp(&b.carpooler));
+  sorted_report
+}
+
+fn print_report(formatted_report: String) {
+  println!("{}", formatted_report);
 }
