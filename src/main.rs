@@ -1,3 +1,4 @@
+use clipboard::{ClipboardContext, ClipboardProvider};
 use config::Config;
 use directories::ProjectDirs;
 use inquire::MultiSelect;
@@ -22,7 +23,8 @@ fn main() {
     Ok(_) => {
       let report = build_report(selected_carpoolers.unwrap(), config.current_user);
       let formatted_report = format_report(report.clone());
-      print_report(formatted_report);
+      print_report(&formatted_report);
+      copy_report_to_clipboard(&formatted_report);
     }
     Err(_) => panic!("The selected carpoolers could not be retrieved"),
   }
@@ -91,6 +93,12 @@ fn sort_report(report: Vec<CarpoolerStatus>) -> Vec<CarpoolerStatus> {
   sorted_report
 }
 
-fn print_report(formatted_report: String) {
+fn print_report(formatted_report: &String) {
   println!("{}", formatted_report);
+}
+
+fn copy_report_to_clipboard(report: &String) {
+  let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+  ctx.set_contents(report.to_owned()).unwrap();
+  println!("Report copied to clipboard!");
 }
