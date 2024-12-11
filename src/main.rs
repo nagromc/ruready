@@ -15,6 +15,7 @@ struct CarpoolerStatus {
 }
 
 fn main() {
+  print_version();
   let config = load_configuration();
   let selected_carpoolers =
     MultiSelect::new("Select the carpoolers of today:", config.carpoolers).prompt();
@@ -28,6 +29,13 @@ fn main() {
     }
     Err(_) => panic!("The selected carpoolers could not be retrieved"),
   }
+}
+
+fn print_version() {
+  let app_name = env!("CARGO_PKG_NAME");
+  let app_version = env!("CARGO_PKG_VERSION");
+  
+  println!("{} v{}\n", app_name, app_version);
 }
 
 fn load_configuration() -> Configuration {
