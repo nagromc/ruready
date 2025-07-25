@@ -1,3 +1,4 @@
+use std::io::Error;
 use clipboard::{ClipboardContext, ClipboardProvider};
 use config::Config;
 use directories::ProjectDirs;
@@ -16,19 +17,15 @@ struct CarpoolerStatus {
 
 fn main() {
   print_version();
-  let config = load_configuration();
-  let selected_carpoolers =
-    MultiSelect::new("Select the carpoolers of today:", config.carpoolers).prompt();
+  let config = load_configuration().expect("Could not load settings");
+  let selected_carpoolers = MultiSelect::new("Select the carpoolers of today:", config.carpoolers)
+    .prompt()
+    .expect("The selected carpoolers could not be retrieved");
 
-  match selected_carpoolers {
-    Ok(_) => {
-      let report = build_report(selected_carpoolers.unwrap(), config.current_user);
-      let formatted_report = format_report(report.clone());
-      print_report(&formatted_report);
-      copy_report_to_clipboard(&formatted_report);
-    }
-    Err(_) => panic!("The selected carpoolers could not be retrieved"),
-  }
+  let report = build_report(selected_carpoolers, config.current_user);
+  let formatted_report = format_report(report.clone());
+  print_report(&formatted_report);
+  copy_report_to_clipboard(&formatted_report);
 }
 
 fn print_version() {
@@ -38,35 +35,28 @@ fn print_version() {
   println!("{} v{}\n", app_name, app_version);
 }
 
-fn load_configuration() -> Configuration {
-  if let Some(proj_dirs) = ProjectDirs::from("", "", "RUReady") {
-    let config_dir = proj_dirs.config_dir();
+fn load_configuration() -> Result<Configuration, Error> {
+  match ProjectDirs::from("", "", "RUReady") {
+    None => panic!("Could not load settings"),
+    Some(proj_dirs) => {
+      let config_dir = proj_dirs.config_dir();
 
-    let settings = Config::builder()
-      .add_source(config::File::from(config_dir.join("ruready.toml")))
-      .build()
-      .unwrap();
+      let settings = Config::builder()
+          .add_source(config::File::from(config_dir.join("ruready.toml")))
+          .build()
+          .expect("Could not load settings");
 
-    let carpoolers = settings.get_array("carpoolers");
-    if carpoolers.is_err() {
-      panic!("Could not load list of carpoolers")
+      let carpoolers = settings.get_array("carpoolers").expect("Could not load list of carpoolers");
+      let me = settings.get_string("me").expect("Could not load username");
+
+      Ok(Configuration {
+        carpoolers: carpoolers
+          .iter()
+          .map(|v| v.kind.to_string())
+          .collect::<Vec<String>>(),
+        current_user: me,
+      })
     }
-
-    let me = settings.get_string("me");
-    if me.is_err() {
-      panic!("Could not load username")
-    }
-
-    return Configuration {
-      carpoolers: carpoolers
-        .unwrap()
-        .iter()
-        .map(|v| v.kind.to_string())
-        .collect::<Vec<String>>(),
-      current_user: me.unwrap(),
-    };
-  } else {
-    panic!("Could not load settings")
   }
 }
 
@@ -84,7 +74,7 @@ fn build_report(
     })
     .collect();
 
-  return carpooler_statuses;
+  carpooler_statuses
 }
 
 fn format_report(report: Vec<CarpoolerStatus>) -> String {
@@ -106,7 +96,10 @@ fn print_report(formatted_report: &String) {
 }
 
 fn copy_report_to_clipboard(report: &String) {
-  let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
-  ctx.set_contents(report.to_owned()).unwrap();
+  let mut ctx: ClipboardContext =
+    ClipboardProvider::new().expect("Failed to get clipboard context");
+  ctx
+    .set_contents(report.to_owned())
+    .expect("Failed to set clipboard contents");
   println!("Report copied to clipboard!");
 }
