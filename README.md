@@ -10,7 +10,10 @@ cargo install --path .
 
 ## Configuration
 
-Copy to `%APPDATA%\RUReady\config\ruready.toml` the following content:
+Copy the following content to the configuration file according to your platform:
+
+* Windows: `%APPDATA%\RUReady\config\ruready.toml`
+* macOS: `~/Library/Application Support/RUReady/ruready.toml`
 
 ```toml
 carpoolers = [
