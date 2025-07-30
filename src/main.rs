@@ -9,6 +9,35 @@ struct Configuration {
   current_user: String,
 }
 
+impl Configuration {
+  fn load() -> Result<Configuration, Error> {
+    match ProjectDirs::from("", "", "RUReady") {
+      None => panic!("Could not load settings"),
+      Some(proj_dirs) => {
+        let config_dir = proj_dirs.config_dir();
+
+        let settings = Config::builder()
+          .add_source(config::File::from(config_dir.join("ruready.toml")))
+          .build()
+          .expect("Could not load settings");
+
+        let carpoolers = settings
+          .get_array("carpoolers")
+          .expect("Could not load list of carpoolers");
+        let me = settings.get_string("me").expect("Could not load username");
+
+        Ok(Configuration {
+          carpoolers: carpoolers
+            .iter()
+            .map(|v| v.kind.to_string())
+            .collect::<Vec<String>>(),
+          current_user: me,
+        })
+      }
+    }
+  }
+}
+
 #[derive(Clone)]
 struct CarpoolerStatus {
   carpooler: String,
@@ -17,7 +46,7 @@ struct CarpoolerStatus {
 
 fn main() {
   print_version();
-  let config = load_configuration().expect("Could not load settings");
+  let config = Configuration::load().expect("Could not load settings");
   let selected_carpoolers = MultiSelect::new("Select the carpoolers of today:", config.carpoolers)
     .prompt()
     .expect("The selected carpoolers could not be retrieved");
@@ -33,33 +62,6 @@ fn print_version() {
   let app_version = env!("CARGO_PKG_VERSION");
 
   println!("{app_name} v{app_version}\n");
-}
-
-fn load_configuration() -> Result<Configuration, Error> {
-  match ProjectDirs::from("", "", "RUReady") {
-    None => panic!("Could not load settings"),
-    Some(proj_dirs) => {
-      let config_dir = proj_dirs.config_dir();
-
-      let settings = Config::builder()
-        .add_source(config::File::from(config_dir.join("ruready.toml")))
-        .build()
-        .expect("Could not load settings");
-
-      let carpoolers = settings
-        .get_array("carpoolers")
-        .expect("Could not load list of carpoolers");
-      let me = settings.get_string("me").expect("Could not load username");
-
-      Ok(Configuration {
-        carpoolers: carpoolers
-          .iter()
-          .map(|v| v.kind.to_string())
-          .collect::<Vec<String>>(),
-        current_user: me,
-      })
-    }
-  }
 }
 
 fn build_report(
