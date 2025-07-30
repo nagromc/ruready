@@ -1,8 +1,8 @@
-use std::io::Error;
 use clipboard::{ClipboardContext, ClipboardProvider};
 use config::Config;
 use directories::ProjectDirs;
 use inquire::MultiSelect;
+use std::io::Error;
 
 struct Configuration {
   carpoolers: Vec<String>,
@@ -31,8 +31,8 @@ fn main() {
 fn print_version() {
   let app_name = env!("CARGO_PKG_NAME");
   let app_version = env!("CARGO_PKG_VERSION");
-  
-  println!("{} v{}\n", app_name, app_version);
+
+  println!("{app_name} v{app_version}\n");
 }
 
 fn load_configuration() -> Result<Configuration, Error> {
@@ -42,11 +42,13 @@ fn load_configuration() -> Result<Configuration, Error> {
       let config_dir = proj_dirs.config_dir();
 
       let settings = Config::builder()
-          .add_source(config::File::from(config_dir.join("ruready.toml")))
-          .build()
-          .expect("Could not load settings");
+        .add_source(config::File::from(config_dir.join("ruready.toml")))
+        .build()
+        .expect("Could not load settings");
 
-      let carpoolers = settings.get_array("carpoolers").expect("Could not load list of carpoolers");
+      let carpoolers = settings
+        .get_array("carpoolers")
+        .expect("Could not load list of carpoolers");
       let me = settings.get_string("me").expect("Could not load username");
 
       Ok(Configuration {
@@ -66,23 +68,21 @@ fn build_report(
 ) -> Vec<CarpoolerStatus> {
   let mut carpoolers = selected_carpoolers.clone();
   carpoolers.push(current_carpooler.clone());
-  let carpooler_statuses = carpoolers
+  carpoolers
     .iter()
     .map(|c| CarpoolerStatus {
       carpooler: c.to_string(),
       ready: c.eq(current_carpooler.as_str()),
     })
-    .collect();
-
-  carpooler_statuses
+    .collect()
 }
 
 fn format_report(report: Vec<CarpoolerStatus>) -> String {
   sort_report(report)
-      .iter()
-      .map(|cs| format!("{} {}", if cs.ready { "✔" } else { "❌" }, cs.carpooler))
-      .collect::<Vec<String>>()
-      .join("\n")
+    .iter()
+    .map(|cs| format!("{} {}", if cs.ready { "✔" } else { "❌" }, cs.carpooler))
+    .collect::<Vec<String>>()
+    .join("\n")
 }
 
 fn sort_report(report: Vec<CarpoolerStatus>) -> Vec<CarpoolerStatus> {
@@ -92,7 +92,7 @@ fn sort_report(report: Vec<CarpoolerStatus>) -> Vec<CarpoolerStatus> {
 }
 
 fn print_report(formatted_report: &String) {
-  println!("{}", formatted_report);
+  println!("{formatted_report}");
 }
 
 fn copy_report_to_clipboard(report: &String) {
